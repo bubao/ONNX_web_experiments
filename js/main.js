@@ -3,10 +3,10 @@ window.js_img = js_img;
 var results;
 let imgElement = document.getElementById("imageSrc")
 let inputElement = document.getElementById("fileInput");
-
+let session;
+let pyodide = {}
 //https://github.com/Kazuhito00/AnimeGANv2-ONNX-Sample/blob/main/AnimeGANv2_Convert2ONNX.ipynb
 async function animegan2() {
-  let pyodide = await loadPyodide({ indexURL : "https://cdn.jsdelivr.net/pyodide/v0.19.0/full/" });
   // Pyodide is now ready to use...
   console.log(pyodide.runPython(`
     import sys
@@ -44,7 +44,7 @@ async function animegan2() {
   var width=pyodide.globals.get('width');
   var height=pyodide.globals.get('height');
   console.log(width, height);
-  const session = await ort.InferenceSession.create('/face_paint_512_v2_0.onnx');
+  // const session = await ort.InferenceSession.create('http://127.0.0.1:8080/face_paint_512_v2_0.onnx');
   //var input_name = session.get_inputs()[0].name
   //output_name = session.get_outputs()[0].name
   console.log(array)
@@ -98,16 +98,22 @@ async function animegan2() {
   document.getElementById("output").src = image
 };
 
-inputElement.addEventListener("change", (e) => {
-  imgElement.src = URL.createObjectURL(e.target.files[0]);
-  var reader = new FileReader();
-  reader.readAsDataURL(e.target.files[0]);
-  reader.onload = function () {
-    window.js_img=reader.result
-    console.log(reader.result);
-    animegan2()
-  }
-}, false);
+window.onload = async function() {
+  session = await ort.InferenceSession.create('/face_paint_512_v2_0.onnx');
+  pyodide = await loadPyodide({ indexURL : "https://cdn.jsdelivr.net/pyodide/v0.19.0/full/" });
+
+  inputElement.addEventListener("change", (e) => {
+    imgElement.src = URL.createObjectURL(e.target.files[0]);
+    var reader = new FileReader();
+    reader.readAsDataURL(e.target.files[0]);
+    reader.onload = function () {
+      window.js_img=reader.result
+      // console.log(reader.result);
+      animegan2()
+    }
+  }, false);
+}
+
 
 
 //https://github.com/onnx/models/blob/master/vision/super_resolution/sub_pixel_cnn_2016/dependencies/Run_Super_Resolution_Model.ipynb
